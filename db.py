@@ -28,8 +28,14 @@ def create_pool():
 
 pool = create_pool()
 
+def choose_param(args, kwargs):
+    if len(args) > 0:
+        return args
+    if len(kwargs) > 0:
+        return kwargs
+
 def transactional(method):
-    def wrapper(*args, **kwds):
+    def decorator(*args, **kwds):
         try:
             _result = method(*args, **kwds)
             pool.commit()
@@ -38,32 +44,46 @@ def transactional(method):
             raise e
         return _result
 
-    return wrapper
+    return decorator
 
 def insert(method):
 
-    def wrapper(dao, *args, **kwargs):
+    def decorator(dao, *args, **kwargs):
         cursor = pool.cursor()
         sql = method(dao, *args, **kwargs)
-        cursor.execute(sql, *args, **kwargs)
+        cursor.execute(sql, kwargs)
         return cursor.lastrowid
 
-    return wrapper
+    return decorator
 
 def query(method):
 
-    def wrapper(dao, *args, **kwargs):
+    def decorator(dao, *args, **kwargs):
         cursor = pool.cursor()
         sql = method(dao, *args, **kwargs)
-        cursor.execute(sql, *args, **kwargs)
+        cursor.execute(sql, args, kwargs)
         return cursor.fetchall()
 
-    return wrapper
+    return decorator
 
-def get(method):
-    def wrapper(dao, *args, **kwargs):
+def update(method):
+
+    def decorator(dao, *args, **kwargs):
         cursor = pool.cursor()
         sql = method(dao, *args, **kwargs)
-        cursor.execute(sql, *args, **kwargs)
+        cursor.execute(sql, args, kwargs)
+        return cursor.rowcount
+
+    return decorator
+
+def get(method):
+    def decorator(dao, *args, **kwargs):
+        cursor = pool.cursor()
+        sql = method(dao, *args, **kwargs)
+        param = choose_param(args, kwargs)
+        if param is None:
+            cursor.execute(sql)
+        else:
+            cursor.execute(sql, param)
         return cursor.fetchone()
-    return wrapper
+    return decorator

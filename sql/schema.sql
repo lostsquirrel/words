@@ -7,3 +7,33 @@ CREATE TABLE `words`.`wordbook`  (
   `modified_time` datetime NOT NULL,
   PRIMARY KEY (`id`)
 );
+
+CREATE TABLE `words`.`invite_code`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` char(32) NOT NULL,
+  `create_time` datetime NOT NULL,
+  `modified_time` datetime NOT NULL,
+  `bind` 
+  int UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE `words`.`user`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `device_id` varchar(255) NOT NULL,
+  `device_type` tinyint NOT NULL,
+  `create_time` datet-ime NOT NULL,
+  `modified_time` datetime NOT NULL,
+  `state` tinyint NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE `words`.`token`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `token` char(32) NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `create_time` datetime NOT NULL,
+  `modified_time` datetime NOT NULL,
+  `state` tinyint UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+);

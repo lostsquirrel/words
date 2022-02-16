@@ -16,6 +16,9 @@
             "envFile": "${workspaceFolder}/.env",
             "args": [
                 "run",
+                "--host",
+                "0.0.0.0",
+                "--eager-loading",
                 "--no-debugger"
             ],
             "jinja": true
