@@ -37,3 +37,14 @@ CREATE TABLE `words`.`token`  (
   `state` tinyint UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 );
+
+CREATE TABLE `words`.`words`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `guid` int NOT NULL,
+  `word` varchar(255) NOT NULL,
+  `phonetic` varchar(1000) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `score` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `word_index`(`word`) USING BTREE
+);
