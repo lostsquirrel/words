@@ -3,17 +3,17 @@ import db
 class Phonetic(db.Row):
 
     def __init__(self, value, file):
-        self.value = value
-        self.file = file
+        self.value = value # 音标
+        self.file = file # 发音音频文件地址
 
 class Word():
 
     def __init__(self):
         self.id = None
-        self.guid = None
-        self.word = None
+        self.guid = None # 词库编号
+        self.word = None # 单词
         self.__phonetic = None
-        self.description = None
+        self.description = None # 释义
         self.score = 0
 
     @staticmethod

@@ -2,15 +2,19 @@ from datetime import datetime
 import db
 
 
-class InviteCode(db.Row):
+class InviteCode():
+    def __init__(self, code: str):
+        """生成邀请码
 
-    def __init__(self, code):
+        Args:
+            code (str): 邀请码
+        """
         current_time = datetime.now()
         self.id = None
         self.code = code
         self.create_time = current_time
         self.modified_time = current_time
-        self.bind = 0
+        self.bind = 0 # 绑定的用户ID， 未绑定为 0
 
     @staticmethod
     def from_db(*args):

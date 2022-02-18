@@ -48,3 +48,25 @@ CREATE TABLE `words`.`words`  (
   PRIMARY KEY (`id`),
   INDEX `word_index`(`word`) USING BTREE
 );
+
+CREATE TABLE `words`.`plan`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` int UNSIGNED NOT NULL,
+  `book_id` int UNSIGNED NOT NULL,
+  `strategy` tinyint NOT NULL,
+  `amount_per_day` int NOT NULL,
+  `default` tinyint NOT NULL,
+  `state` tinyint NOT NULL,
+  `phonetic` tinyint NOT NULL DEFAULT 0,
+  `create_time` datetime NOT NULL,
+  `modified_time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE `words`.`memorize`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `plan_id` int UNSIGNED NOT NULL,
+  `word_id` int UNSIGNED NOT NULL,
+  `create_time` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+);
