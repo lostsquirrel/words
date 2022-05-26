@@ -5,6 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: gunicorn",
+            "type": "python",
+            "request": "launch",
+            "module": "gunicorn",
+            "envFile": "${workspaceFolder}/.env",
+            "args": [
+                "-w",
+                "4",
+                "-b",
+                ":5000",
+                "words:app"
+            ],
+            "console": "integratedTerminal"
+        },    
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
@@ -19,17 +34,20 @@
             "module": "flask",
             "env": {
                 "FLASK_APP": "words",
-                "FLASK_ENV": "development"
+                "FLASK_ENV": "development",
             },
             "envFile": "${workspaceFolder}/.env",
             "args": [
                 "run",
                 "--host",
                 "0.0.0.0",
-                "--eager-loading",
+                "--port",
+                "8000",
+                // "--eager-loading",
                 "--no-debugger"
             ],
             "jinja": true
-        }
+        },
+
     ]
 }

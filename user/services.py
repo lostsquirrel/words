@@ -18,11 +18,11 @@ def createUser(code: str, device_id, device_type):
     c = getInviteCode(code)
     if c is None:
         raise LogicException("invalid code")
-    
+
     u = User()
     u.device_id = device_id
     u.device_type = device_type
-    user_id = userDAO.save(**u)
+    user_id = userDAO.save(**u.unbox())
     inviteCodeDAO.update(user_id, current_time, code)
     return getUser(user_id)
 
@@ -52,7 +52,7 @@ def login(device_id, device_type):
         old_token = getTokenByUser(user.id)
         if old_token is None:
             _token = Token(token, user.id)
-            tokenDAO.save(**_token)
+            tokenDAO.save(**_token.unbox())
         else:
             tokenDAO.update(token, datetime.now(), old_token.id)
         return token
@@ -63,6 +63,7 @@ def getInviteCode(code: str) -> InviteCode:
     if _code is not None:
         return InviteCode.from_db(*_code)
 
+
 @db.transactional
 def generate_invite_code():
     _code = generate_uuid()
@@ -71,8 +72,8 @@ def generate_invite_code():
 
     return _code
 
+
 def getToken(token: str) -> Token:
     _t = tokenDAO.find(token)
     if _t is not None:
         return Token.from_db(*_t)
-

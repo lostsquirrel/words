@@ -15,3 +15,4 @@ def verify_token(token):
     if _token is not None:
         user = userService.getUser(_token.user_id)
         return user
+

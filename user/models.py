@@ -27,7 +27,7 @@ class InviteCode():
         return _o
 
 
-class User(db.Row):
+class User(db.Base):
 
     def __init__(self):
         current_time = datetime.now()
@@ -50,7 +50,7 @@ class User(db.Row):
         return u
 
 
-class Token(db.Row):
+class Token(db.Base):
 
     def __init__(self, token, user_id):
         current_time = datetime.now()
@@ -100,7 +100,7 @@ class UserDAO:
 
     @db.get
     def find(self, uid: int):
-        sql = "SELECT id, device_id, device_type, create_time, modified_time, state FROM user WHERE id = %s"
+        sql = "SELECT id, device_id, device_type, create_time, modified_time, state FROM user WHERE id = %s  LIMIT 1"
         return sql
 
     @db.get
@@ -119,12 +119,12 @@ class TokenDAO:
 
     @db.get
     def find(self, token):
-        sql = "SELECT id, token, user_id, create_time, modified_time, state FROM token WHERE token = %s"
+        sql = "SELECT id, token, user_id, create_time, modified_time, state FROM token WHERE token = %s LIMIT 1"
         return sql
 
     @db.get
     def find_by_user(self, user_id):
-        sql = "SELECT id, token, user_id, create_time, modified_time, state FROM token WHERE user_id = %s"
+        sql = "SELECT id, token, user_id, create_time, modified_time, state FROM token WHERE user_id = %s LIMIT 1"
         return sql
 
     @db.update

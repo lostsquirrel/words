@@ -1,8 +1,10 @@
 import math
 import uuid
 import json
-
+from datetime import datetime, date
 from flask import make_response
+
+from db import Base
 
 
 def generate_uuid():
@@ -12,9 +14,19 @@ def generate_uuid():
 class CustomEncoder(json.JSONEncoder):
 
     def default(self, obj):
-        return obj.__dict__
+        if isinstance(obj, Base):
+            return obj.unbox()
+        elif isinstance(obj, datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(obj, date):
+            return obj.strftime('%Y-%m-%d')
+        else:
+            return json.JSONEncoder.default(self, obj)
+
 
 encoder = CustomEncoder()
+
+
 def render_json(data):
     content = encoder.encode(data)
     r = make_response(content)
@@ -32,9 +44,9 @@ def render_error(msg, code=200):
 
 class Rule:
 
-    def __init__(self, key, required=True, default=None):
+    def __init__(self, key, default=None):
         self.key = key
-        self.required = required
+        self.required = default is None
         self.default = default
 
 
@@ -43,8 +55,8 @@ class Validator():
     def __init__(self):
         self.rules = []
 
-    def rule(self, key, required=True, default=None):
-        self.rules.append(Rule(key, required, default))
+    def rule(self, key, default=None):
+        self.rules.append(Rule(key, default))
         return self
 
     def validate_form(self, form):
@@ -66,7 +78,7 @@ class Validator():
         return _param
 
 
-class Paging():
+class Paging(Base):
 
     def __init__(self, total: int, page: int, per_page: int):
 
@@ -88,15 +100,16 @@ class Paging():
 class ValidationError(Exception):
 
     def __init__(self, message):
-        self. value = message
+        self.value = message
 
     def __str__(self):
         return self.value
 
 
 class LogicException(Exception):
-    def __init__(self, message):
-        self. value = message
+    def __init__(self, message: str, code: int = 400):
+        self.value = message
+        self.code = code
 
     def __str__(self):
         return self.value

@@ -1,18 +1,19 @@
+import logging
 from mysql import connector
 from settings import mysql_host, mysql_user, mysql_password, mysql_db_name, mysql_pool_name, mysql_pool_size
 
+logger = logging.getLogger(__name__)
 
-class Row(dict):
-    """A dict that allows for object-like property access syntax."""
 
-    def __getattr__(self, name):
-        try:
-            return self[name]
-        except KeyError:
-            raise AttributeError(name)
+class Base():
 
-    def __setattr__(self, name, value):
-        self[name] = value
+    def unbox(self):
+        b = dict()
+        for k, v in vars(self).items():
+            if k.startswith(f'_{self.__class__.__name__}'):
+                k = k.replace(self.__class__.__name__, '').lstrip("_")
+            b[k] = v
+        return b
 
 
 def build_mysql_config():
@@ -22,7 +23,8 @@ def build_mysql_config():
         host=mysql_host,
         user=mysql_user,
         database=mysql_db_name,
-        passwd=mysql_password
+        passwd=mysql_password,
+        buffered=True
     )
 
 
@@ -38,9 +40,14 @@ def choose_param(args, kwargs):
         return args
     if len(kwargs) > 0:
         return kwargs
+
+
 def ensure_connection():
-    if not pool.is_connected():
-        pool.reconnect()
+    pass
+    # if not pool.is_connected():
+    #     print("reconnect")
+    #     pool.reconnect()
+
 
 def execute(args, kwargs, cursor, sql):
     param = choose_param(args, kwargs)
@@ -68,13 +75,15 @@ def insert(method):
 
     def decorator(dao, *args, **kwargs):
         ensure_connection()
-        cursor = pool.cursor()
-        sql = method(dao, *args, **kwargs)
-        execute(args, kwargs, cursor, sql)
-        return cursor.lastrowid
-
-
-
+        cursor = pool.cursor(buffered=True)
+        try:
+            sql = method(dao, *args, **kwargs)
+            execute(args, kwargs, cursor, sql)
+            return cursor.lastrowid
+        except Exception as e:
+            logger.error(e)
+        finally:
+            cursor.close()
     return decorator
 
 
@@ -82,11 +91,17 @@ def query(method):
 
     def decorator(dao, *args, **kwargs):
         ensure_connection()
-        cursor = pool.cursor()
-        sql = method(dao, *args, **kwargs)
-        execute(args, kwargs, cursor, sql)
-        return cursor.fetchall()
+        cursor = pool.cursor(buffered=True)
+        try:
+            sql = method(dao, *args, **kwargs)
+            execute(args, kwargs, cursor, sql)
+            data = cursor.fetchall()
 
+            return data
+        except Exception as e:
+            logger.error(e)
+        finally:
+            cursor.close()
     return decorator
 
 
@@ -94,20 +109,30 @@ def update(method):
 
     def decorator(dao, *args, **kwargs):
         ensure_connection()
-        cursor = pool.cursor()
-        sql = method(dao, *args, **kwargs)
-        execute(args, kwargs, cursor, sql)
-        return cursor.rowcount
+        cursor = pool.cursor(buffered=True)
+        try:
+            sql = method(dao, *args, **kwargs)
+            execute(args, kwargs, cursor, sql)
+            return cursor.rowcount
+        except Exception as e:
+            logger.error(e)
+        finally:
+            cursor.close()
 
     return decorator
 
 
 def get(method):
     def decorator(dao, *args, **kwargs):
-        ensure_connection()
+
         cursor = pool.cursor()
-        sql = method(dao, *args, **kwargs)
-        execute(args, kwargs, cursor, sql)
-        return cursor.fetchone()
+        try:
+            sql = method(dao, *args, **kwargs)
+            execute(args, kwargs, cursor, sql)
+            return cursor.fetchone()
+        except Exception as e:
+            logger.error(e)
+        finally:            
+            cursor.close()
 
     return decorator
