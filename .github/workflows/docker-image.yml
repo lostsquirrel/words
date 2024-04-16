@@ -30,6 +30,7 @@ jobs:
         export PIP_IGNORE_INSTALLED=1
         export PYTHONUSERBASE=${{ github.workspace }}/venv
         sed -i 's#https://pypi.tuna.tsinghua.edu.cn/simple#https://pypi.org/simple#g' Pipfile
+        pipenv install gevent
         pipenv lock
         pipenv install --deploy
         ls venv

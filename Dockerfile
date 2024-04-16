@@ -1,7 +1,5 @@
 FROM gcr.io/distroless/python3-debian12:nonroot
 
-RUN pip3 install gevent
-
 ENV PATH="/venv/bin:$PATH"
 ENV PYTHONUSERBASE=/venv
 
