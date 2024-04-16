@@ -1,0 +1,61 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        path: app
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pipenv'
+    - name: Install pipenv
+      run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+
+    - name: download dependencies
+      run: |
+        cp app/Pipfile .
+        export PIPENV_SYSTEM=1
+        export PIP_USER=1
+        export PIP_IGNORE_INSTALLED=1
+        export PYTHONUSERBASE=${{ github.workspace }}/venv
+        sed -i 's#https://pypi.tuna.tsinghua.edu.cn/simple#https://pypi.org/simple#g' Pipfile
+        pipenv lock
+        pipenv install --deploy
+        ls venv
+        ls venv/bin
+        ls venv/lib/python3.10/site-packages
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ github.actor }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ github.repository }}
+
+    - run: |
+        ls -la venv/bin
+        mv app/Dockerfile .
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
