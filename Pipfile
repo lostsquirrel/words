@@ -4,16 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-flask = "*"
-mysql-connector-python = "*"
-flask-httpauth = "*"
-
-
-[dev-packages]
-pycodestyle = "*"
-autopep8 = "*"
-python-dotenv = "*"
+flask = "==2.3.3"
+mysql-connector-python = "==8.0.33"
+flask-httpauth = "==4.8.0"
 gevent = "*"
 
+[dev-packages]
+
+
 [requires]
-python_version = "3.10"
+python_version = "3.11"
