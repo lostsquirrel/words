@@ -1,0 +1,4 @@
+flask==3.0.2
+flask-httpauth==4.8.0
+gevent==24.2.1
+mysql-connector-python==8.3.0

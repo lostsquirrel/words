@@ -1,13 +1,13 @@
 from datetime import datetime
+
 import db
-from user.models import InviteCode, inviteCodeDAO, User, userDAO, Token, tokenDAO
+from user.models import InviteCode, Token, User, inviteCodeDAO, tokenDAO, userDAO
 from utils import LogicException, generate_uuid
 
 
 def isInviteCodeExists(code: str) -> bool:
     x = getInviteCode(code)
     return x is not None
-
 
 @db.transactional
 def createUser(code: str, device_id, device_type):
@@ -42,7 +42,6 @@ def getTokenByUser(uid):
     _t = tokenDAO.find_by_user(uid)
     if _t is not None:
         return Token.from_db(*_t)
-
 
 @db.transactional
 def login(device_id, device_type):

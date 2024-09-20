@@ -1,9 +1,7 @@
 
-import db
-from plan.models import Plan, planDAO, Memorize, memorizeDAO
+from plan.models import Memorize, Plan, memorizeDAO, planDAO
 from word.models import Word, wordDAO
-
-
+import db
 @db.transactional
 def create_plan(user_id, book_id, strategy, amount_per_day, phonetic):
     plan = Plan()
@@ -23,7 +21,6 @@ def get_user_default_plan(user_id: int) -> Plan:
     _p = planDAO.find_default_by_user(user_id)
     if _p is not None:
         return Plan.from_db(*_p)
-
 
 @db.transactional
 def create_memorize(plan_id, word_id, familiarity) -> id:

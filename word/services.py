@@ -1,14 +1,10 @@
-import db
 from utils import Paging
-
-
 from word.models import Word, wordDAO
-
+import db
 
 @db.transactional
 def save_word(word):
     wordDAO.save(*word)
-
 
 @db.transactional
 def update_phonetic(phonetic: str, word: str, guid: int):
@@ -29,7 +25,6 @@ def get_first_word_by_book(book_guid: int) -> Word:
         return Word.from_db(*_w)
 
 
-def get_word_by_book_with_index(book_guid: int,
-                                start_index: int, per_page: int):
+def get_word_by_book_with_index(book_guid: int, start_index: int, per_page: int):
     words = wordDAO.find_by_book_with_start(book_guid, start_index, per_page)
     return [Word.from_db(*w) for w in words]

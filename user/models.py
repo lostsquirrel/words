@@ -1,34 +1,39 @@
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
+
 import db
 
 
-class InviteCode():
-    def __init__(self, code: str):
-        """生成邀请码
-
-        Args:
-            code (str): 邀请码
-        """
-        current_time = datetime.now()
-        self.id = None
-        self.code = code
-        self.create_time = current_time
-        self.modified_time = current_time
-        self.bind = 0 # 绑定的用户ID， 未绑定为 0
+@dataclass
+class InviteCode(Mapping):
+    code: str
+    id: int = None
+    create_time: datetime = field(default_factory=datetime.now)
+    modified_time: datetime = field(default_factory=datetime.now)
+    bind: int = 0  # 绑定的用户ID， 未绑定为 0
 
     @staticmethod
     def from_db(*args):
-        _o = InviteCode("")
-        _o.id = args[0]
-        _o.code = args[1]
-        _o.create_time = args[2]
-        _o.modified_time = args[3]
-        _o.bind = args[4]
-        return _o
+        return InviteCode(
+            id=args[0],
+            code=args[1],
+            create_time=args[2],
+            modified_time=args[3],
+            bind=args[4],
+        )
+
+    def __iter__(self):
+        return iter(asdict(self))
+
+    def __len__(self):
+        return len(asdict(self))
+
+    def __getitem__(self, item):
+        return getattr(self, item)
 
 
 class User(db.Base):
-
     def __init__(self):
         current_time = datetime.now()
         self.id = None
@@ -51,7 +56,6 @@ class User(db.Base):
 
 
 class Token(db.Base):
-
     def __init__(self, token, user_id):
         current_time = datetime.now()
         self.id = None
@@ -74,7 +78,6 @@ class Token(db.Base):
 
 
 class InviteCodeDAO:
-
     @db.insert
     def save(self, **kwargs):
         sql = "INSERT INTO invite_code (code, create_time, modified_time) VALUES (%(code)s, %(create_time)s, %(modified_time)s)"
@@ -92,7 +95,6 @@ class InviteCodeDAO:
 
 
 class UserDAO:
-
     @db.insert
     def save(self, **kwargs):
         sql = "INSERT INTO user (device_id, device_type, create_time, modified_time, state) VALUES (%(device_id)s, %(device_type)s, %(create_time)s, %(modified_time)s, %(state)s)"
@@ -110,7 +112,6 @@ class UserDAO:
 
 
 class TokenDAO:
-
     @db.insert
     def save(self, **kwargs):
         sql = """INSERT INTO token (token, user_id, create_time, modified_time) 

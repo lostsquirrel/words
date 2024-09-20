@@ -1,17 +1,27 @@
 import logging
+
+from flask import g
 from mysql import connector
-from settings import mysql_host, mysql_user, mysql_password, mysql_db_name, mysql_pool_name, mysql_pool_size
+from werkzeug.local import LocalProxy
+
+from settings import (
+    mysql_db_name,
+    mysql_host,
+    mysql_password,
+    mysql_pool_name,
+    mysql_pool_size,
+    mysql_user,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class Base():
-
+class Base:
     def unbox(self):
         b = dict()
         for k, v in vars(self).items():
-            if k.startswith(f'_{self.__class__.__name__}'):
-                k = k.replace(self.__class__.__name__, '').lstrip("_")
+            if k.startswith(f"_{self.__class__.__name__}"):
+                k = k.replace(self.__class__.__name__, "").lstrip("_")
             b[k] = v
         return b
 
@@ -24,15 +34,43 @@ def build_mysql_config():
         user=mysql_user,
         database=mysql_db_name,
         passwd=mysql_password,
-        buffered=True
     )
 
 
 def create_pool():
-    return connector.connect(**build_mysql_config())
+    return connector.pooling.MySQLConnectionPool(**build_mysql_config())
 
 
 pool = create_pool()
+
+
+def get_db_connection():
+    global pool
+    if "db_connection" not in g:
+        conn = pool.get_connection()
+        try:
+            conn.ping(reconnect=True, attempts=3, delay=5)
+        except connector.Error as err:
+            logger.error(f"Connection error: {err}")
+            # If ping fails, create a new pool
+            
+            pool = create_pool()
+            conn = pool.get_connection()
+        g.db_connection = conn
+    return g.db_connection
+
+
+def close_db_connection(e=None):
+    db_connection = g.pop("db_connection", None)
+    if db_connection is not None:
+        db_connection.close()
+
+
+def init_app(app):
+    app.teardown_appcontext(close_db_connection)
+
+
+connection = LocalProxy(get_db_connection)
 
 
 def choose_param(args, kwargs):
@@ -40,13 +78,6 @@ def choose_param(args, kwargs):
         return args
     if len(kwargs) > 0:
         return kwargs
-
-
-def ensure_connection():
-    pass
-    # if not pool.is_connected():
-    #     print("reconnect")
-    #     pool.reconnect()
 
 
 def execute(args, kwargs, cursor, sql):
@@ -59,12 +90,13 @@ def execute(args, kwargs, cursor, sql):
 
 def transactional(method):
     def decorator(*args, **kwds):
-        ensure_connection()
+        conn = get_db_connection()
         try:
+            # conn.start_transaction()
             _result = method(*args, **kwds)
-            pool.commit()
+            conn.commit()
         except Exception as e:
-            pool.rollback()
+            conn.rollback()
             raise e
         return _result
 
@@ -72,10 +104,9 @@ def transactional(method):
 
 
 def insert(method):
-
     def decorator(dao, *args, **kwargs):
-        ensure_connection()
-        cursor = pool.cursor(buffered=True)
+        connection = get_db_connection()
+        cursor = connection.cursor(buffered=True)
         try:
             sql = method(dao, *args, **kwargs)
             execute(args, kwargs, cursor, sql)
@@ -84,14 +115,13 @@ def insert(method):
             logger.error(e)
         finally:
             cursor.close()
+
     return decorator
 
 
 def query(method):
-
     def decorator(dao, *args, **kwargs):
-        ensure_connection()
-        cursor = pool.cursor(buffered=True)
+        cursor = get_db_connection().cursor(buffered=True)
         try:
             sql = method(dao, *args, **kwargs)
             execute(args, kwargs, cursor, sql)
@@ -102,17 +132,18 @@ def query(method):
             logger.error(e)
         finally:
             cursor.close()
+
     return decorator
 
 
 def update(method):
-
     def decorator(dao, *args, **kwargs):
-        ensure_connection()
-        cursor = pool.cursor(buffered=True)
+        connection = get_db_connection()
+        cursor = connection.cursor(buffered=True)
         try:
             sql = method(dao, *args, **kwargs)
             execute(args, kwargs, cursor, sql)
+
             return cursor.rowcount
         except Exception as e:
             logger.error(e)
@@ -124,15 +155,15 @@ def update(method):
 
 def get(method):
     def decorator(dao, *args, **kwargs):
-
-        cursor = pool.cursor()
+        connection = get_db_connection()
+        cursor = connection.cursor(buffered=True)
         try:
             sql = method(dao, *args, **kwargs)
             execute(args, kwargs, cursor, sql)
             return cursor.fetchone()
         except Exception as e:
             logger.error(e)
-        finally:            
+        finally:
             cursor.close()
 
     return decorator

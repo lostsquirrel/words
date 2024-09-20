@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Python: gunicorn",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "gunicorn",
             "envFile": "${workspaceFolder}/.env",
@@ -21,7 +21,7 @@
         },    
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "envFile": "${workspaceFolder}/.env",
@@ -29,11 +29,11 @@
         },
         {
             "name": "Python: Flask",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "flask",
             "env": {
-                "FLASK_APP": "words",
+                "FLASK_APP": "words:app",
                 "FLASK_ENV": "development",
             },
             "envFile": "${workspaceFolder}/.env",
@@ -42,7 +42,7 @@
                 "--host",
                 "0.0.0.0",
                 "--port",
-                "8000",
+                "5000",
                 // "--eager-loading",
                 "--no-debugger"
             ],

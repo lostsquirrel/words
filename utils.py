@@ -1,7 +1,9 @@
+import json
 import math
 import uuid
-import json
-from datetime import datetime, date
+from dataclasses import asdict, is_dataclass
+from datetime import date, datetime
+
 from flask import make_response
 
 from db import Base
@@ -14,12 +16,17 @@ def generate_uuid():
 class CustomEncoder(json.JSONEncoder):
 
     def default(self, obj):
+        if is_dataclass(obj):
+            return asdict(obj)
         if isinstance(obj, Base):
             return obj.unbox()
+
+            
         elif isinstance(obj, datetime):
             return obj.strftime('%Y-%m-%d %H:%M:%S')
         elif isinstance(obj, date):
             return obj.strftime('%Y-%m-%d')
+        
         else:
             return json.JSONEncoder.default(self, obj)
 
