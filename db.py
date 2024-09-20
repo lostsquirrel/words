@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from flask import g
 from mysql import connector
@@ -12,8 +13,10 @@ from settings import (
     mysql_pool_size,
     mysql_user,
 )
+from utils import LogicException
 
 logger = logging.getLogger(__name__)
+lock = threading.Lock()
 
 
 class Base:
@@ -38,7 +41,8 @@ def build_mysql_config():
 
 
 def create_pool():
-    return connector.pooling.MySQLConnectionPool(**build_mysql_config())
+    pool = connector.pooling.MySQLConnectionPool(**build_mysql_config())
+    return pool
 
 
 pool = create_pool()
@@ -47,16 +51,24 @@ pool = create_pool()
 def get_db_connection():
     global pool
     if "db_connection" not in g:
-        conn = pool.get_connection()
         try:
-            conn.ping(reconnect=True, attempts=3, delay=5)
-        except connector.Error as err:
-            logger.error(f"Connection error: {err}")
-            # If ping fails, create a new pool
-            
-            pool = create_pool()
             conn = pool.get_connection()
-        g.db_connection = conn
+            
+            try:
+                conn.ping(reconnect=True, attempts=3, delay=5)
+                g.db_connection = conn
+            except connector.Error as err:
+                logger.error(f"Connection error: {err}")
+                with lock:
+                    pool = create_pool()
+                conn = pool.get_connection()
+                g.db_connection = conn
+
+        except connector.PoolError as e:
+            logger.error(e)
+            raise LogicException("system busy")
+
+
     return g.db_connection
 
 
